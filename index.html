@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>中山家餐飲｜線上訂位開放日期查詢</title>
+<style>
+:root{--gold:#b89881;--sand:#dcc4a1;--brown:#44372a;--ink:#0a0909;--panel:#171413;--line:#2f2f2f;--mute:#a6a6a6}
+*{box-sizing:border-box;margin:0}
+body{background:var(--ink);color:#fff;font-family:"Noto Sans TC","PingFang TC","微軟正黑體",sans-serif;line-height:1.7;min-height:100vh}
+header{text-align:center;padding:48px 20px 28px;border-bottom:1px solid var(--line)}
+header small{letter-spacing:.35em;color:var(--gold);font-size:12px}
+header h1{font-weight:300;font-size:26px;letter-spacing:.3em;margin-top:6px;color:var(--sand)}
+main{max-width:640px;margin:0 auto;padding:32px 20px 60px}
+.card{background:var(--panel);border:1px solid var(--line);padding:24px;margin-bottom:20px}
+.now{color:var(--sand);text-align:center}
+.now b{display:block;font-size:22px;font-weight:400;color:#fff;letter-spacing:.08em}
+label{display:block;color:var(--gold);letter-spacing:.2em;font-size:13px;margin-bottom:8px}
+input[type=date]{width:100%;padding:12px;background:var(--ink);color:#fff;border:1px solid var(--gold);font:inherit;color-scheme:dark}
+.result{text-align:center;margin-top:22px;padding-top:22px;border-top:1px solid var(--line)}
+.result .big{font-size:28px;color:var(--sand);letter-spacing:.06em}
+.result p{color:var(--mute);font-size:14px}
+.warn{color:#e0a37a}
+.ok{color:#9fc79a}
+.links{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
+.links a{flex:1;min-width:140px;text-align:center;padding:12px;border:1px solid var(--gold);color:var(--gold);text-decoration:none;letter-spacing:.15em;transition:.2s}
+.links a:hover{background:var(--gold);color:var(--ink)}
+.cal{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+.cal a,.cal button{flex:1;min-width:140px;text-align:center;padding:11px;border:1px solid var(--gold);background:none;color:var(--gold);font:inherit;text-decoration:none;letter-spacing:.12em;cursor:pointer;transition:.2s}
+.cal a:hover,.cal button:hover{background:var(--gold);color:var(--ink)}
+footer{text-align:center;color:#777;font-size:12px;padding:0 20px 40px;letter-spacing:.1em}
+</style>
+</head>
+<body>
+<header><small>ZONZEN RESERVATION</small><h1>線上訂位開放日期查詢</h1></header>
+<main>
+  <div class="card now" id="now"></div>
+  <div class="card">
+    <label for="d">請選擇「想要預訂用餐的日期」：</label>
+    <input type="date" id="d">
+    <div class="result" id="res"></div>
+  </div>
+  <div class="card"><label>前往線上訂位</label><div class="links" id="links"></div></div>
+</main>
+<footer>© 非官方查詢工具 · 各分店可訂位時間不同，以訂位頁顯示為準</footer>
+<script>
+const DAYS = 29;               // 用餐日前 29 天的 00:00 開放
+const WD = ["日","一","二","三","四","五","六"];
+const B = "https://inline.app/booking/-LzoSPyWXzTNSaE-I4QJ:inline-live-1";
+const LINKS = [
+  ["全品牌訂位首頁", B+"?language=zh-tw"],
+  ["燒肉中山 台北信義", B+"/-LzoSQ1_si_q2njdnE5o"],
+  ["燒肉中山 台中大墩", B+"/-MdytTkuohNf5wnBz1vZ"],
+  ["板前中山 台北信義", B+"/-N_aoyq3FoVkVFlaIRWO"],
+  ["板前中山 台北新光", B+"/-NbCmIwbNwC5pJhud0ju"],
+  ["中山 Red Label 漢神洲際", B+"?language=zh-tw"]
+];
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,"0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fmt = d => `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}（週${WD[d.getDay()]}）`;
+const today = () => { const t = new Date(); return new Date(t.getFullYear(),t.getMonth(),t.getDate()); };
+const addDays = (d,n) => new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+
+const ymd = d => `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
+function calLinks(dine, open){
+  // 語法比照 Inline 預約頁：timed 事件、TZID=Asia/Taipei、開始/結束、含 VTIMEZONE
+  const title = `Zonzen 開放訂位（用餐日 ${dine.getMonth()+1}/${dine.getDate()}）`;
+  const desc = `${fmt(dine)} 的位子，${fmt(open)} 00:00 起開放線上訂位：${B}?language=zh-tw`;
+  const day = ymd(open);
+  const start = day+"T000000", end = day+"T003000";
+  const g = "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(title)
+    +"&dates="+start+"/"+end+"&ctz=Asia/Taipei&details="+encodeURIComponent(desc);
+  const esc = t => t.replace(/[,;]/g,"\\$&");
+  const ics = ["BEGIN:VCALENDAR","NAME:"+title,"X-WR-CALNAME:"+title,"VERSION:2.0","PRODID:-//zonzen-booking//TW",
+    "BEGIN:VTIMEZONE","TZID:Asia/Taipei","BEGIN:STANDARD","TZNAME:CST","TZOFFSETFROM:+0800","TZOFFSETTO:+0800",
+    "DTSTART:19700101T000000","END:STANDARD","END:VTIMEZONE",
+    "BEGIN:VEVENT","UID:"+day+"-"+ymd(dine)+"@zonzen-booking","DTSTAMP:"+ymd(today())+"T000000Z",
+    "DTSTART;TZID=Asia/Taipei:"+start,"DTEND;TZID=Asia/Taipei:"+end,"STATUS:CONFIRMED",
+    "SUMMARY:"+esc(title),"DESCRIPTION:"+esc(desc),"URL:"+B+"?language=zh-tw",
+    "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+esc(title),"TRIGGER:-PT3H","END:VALARM",
+    "END:VEVENT","END:VCALENDAR"].join("\r\n");
+  const url = "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics);
+  const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+  const btn = mobile ? `<a href="${url}" download="zonzen-${day}.ics">加入行事曆</a>`
+                     : `<a href="${g}" target="_blank" rel="noopener">加入行事曆</a>`;
+  return `<div class="cal">${btn}</div>`
+    +`<p style="margin-top:8px">00:00 開放；開放前一晚 21:00 會提醒</p>`;
+}
+function render(){
+  const t = today();
+  $("now").innerHTML = `今天（${fmt(t)}）可預訂至<b>${fmt(addDays(t,DAYS))}</b>`;
+  $("links").innerHTML = LINKS.map(([n,u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join("");
+  const v = $("d").value;
+  if(!v){ $("res").innerHTML = `<p>選好日期後會顯示開放訂位時間</p>`; return; }
+  const [y,m,dd] = v.split("-").map(Number), dine = new Date(y,m-1,dd);
+  const open = addDays(dine,-DAYS), diff = Math.round((open-t)/864e5);
+  let html = `<p>${fmt(dine)} 的位子</p><div class="big">${fmt(open)} 00:00 開放</div>`;
+  if(diff<0) html += `<p class="ok">已開放（${-diff} 天前）</p>`;
+  else if(diff===0) html += `<p class="ok">今天 00:00 已開放，可直接訂位</p>`;
+  else html += `<p class="warn">還要 ${diff} 天才開放</p>`+calLinks(dine,open);
+  $("res").innerHTML = html;
+}
+$("d").addEventListener("input",render);
+$("d").value = iso(addDays(today(),DAYS));
+render();
+</script>
+</body>
+</html>
