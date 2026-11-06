@@ -48,12 +48,12 @@ const DAYS = 29;               // 用餐日前 29 天的 00:00 開放
 const WD = ["日","一","二","三","四","五","六"];
 const B = "https://inline.app/booking/-LzoSPyWXzTNSaE-I4QJ:inline-live-1";
 const LINKS = [
-  ["全品牌訂位首頁", B+"?language=zh-tw"],
-  ["燒肉中山 台北信義", B+"/-LzoSQ1_si_q2njdnE5o"],
-  ["燒肉中山 台中大墩", B+"/-MdytTkuohNf5wnBz1vZ"],
-  ["板前中山 台北信義", B+"/-N_aoyq3FoVkVFlaIRWO"],
-  ["板前中山 台北新光", B+"/-NbCmIwbNwC5pJhud0ju"],
-  ["中山 Red Label 漢神洲際", B+"?language=zh-tw"]
+  ["全品牌<br>訂位首頁", B+"?language=zh-tw"],
+  ["燒肉中山<br>台北信義", B+"/-LzoSQ1_si_q2njdnE5o"],
+  ["燒肉中山<br>台中大墩", B+"/-MdytTkuohNf5wnBz1vZ"],
+  ["板前中山<br>台北信義", B+"/-N_aoyq3FoVkVFlaIRWO"],
+  ["板前中山<br>台北新光", B+"/-NbCmIwbNwC5pJhud0ju"],
+  ["中山RedLabel<br>漢神洲際", B+"?language=zh-tw"]
 ];
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2,"0");
@@ -66,7 +66,7 @@ const ymd = d => `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
 function calLinks(dine, open){
   // 語法比照 Inline 預約頁：timed 事件、TZID=Asia/Taipei、開始/結束、含 VTIMEZONE
   const title = `Zonzen 開放訂位（用餐日 ${dine.getMonth()+1}/${dine.getDate()}）`;
-  const desc = `${fmt(dine)} 的位子，${fmt(open)} 00:00 起開放線上訂位：${B}?language=zh-tw`;
+  const desc = `${fmt(dine)} 的座位將在，${fmt(open)} 00:00 起開放線上訂位：${B}?language=zh-tw`;
   const day = ymd(open);
   const start = day+"T000000", end = day+"T003000";
   const g = "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(title)
@@ -82,10 +82,10 @@ function calLinks(dine, open){
     "END:VEVENT","END:VCALENDAR"].join("\r\n");
   const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
   if(!mobile) return `<div class="cal"><a href="${g}" target="_blank" rel="noopener">加入行事曆</a></div>`
-    +`<p style="margin-top:8px">00:00 開放；開放前一晚 21:00 會提醒</p>`;
+    +`<p style="margin-top:8px"></p>`;
   window.__ics = {text:ics, name:`zonzen-${day}.ics`};
   return `<div class="cal"><a href="#" id="icsbtn">加入行事曆</a></div>`
-    +`<p style="margin-top:8px">00:00 開放；開放前一晚 21:00 會提醒</p>`
+    +`<p style="margin-top:8px"></p>`
     +`<p style="margin-top:6px"><a href="${g}" target="_blank" rel="noopener" style="color:var(--gold)">按了沒反應？改用 Google 行事曆開啟</a></p>`;
 }
 // 手機：手機瀏覽器不支援 data: 網址下載，改用 Blob 網址（Content-Type 為 text/calendar）
@@ -102,15 +102,15 @@ document.addEventListener("click", e => {
 });
 function render(){
   const t = today();
-  $("now").innerHTML = `今天（${fmt(t)}）可預訂至<b>${fmt(addDays(t,DAYS))}</b>`;
+  $("now").innerHTML = `今天 ${fmt(t)} 開放至<b>${fmt(addDays(t,DAYS))}</b>`;
   $("links").innerHTML = LINKS.map(([n,u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join("");
   const v = $("d").value;
   if(!v){ $("res").innerHTML = `<p>選好日期後會顯示開放訂位時間</p>`; return; }
   const [y,m,dd] = v.split("-").map(Number), dine = new Date(y,m-1,dd);
   const open = addDays(dine,-DAYS), diff = Math.round((open-t)/864e5);
-  let html = `<p>${fmt(dine)} 的位子</p><div class="big">${fmt(open)} 00:00 開放</div>`;
+  let html = `<p>${fmt(dine)} 的座位，將在</p><div class="big">${fmt(open)} 00:00 開放</div>`;
   if(diff<0) html += `<p class="ok">已開放（${-diff} 天前）</p>`;
-  else if(diff===0) html += `<p class="ok">今天 00:00 已開放，可直接訂位</p>`;
+  else if(diff===0) html += `<p class="ok">已開放，可直接訂位</p>`;
   else html += `<p class="warn">還要 ${diff} 天才開放</p>`+calLinks(dine,open);
   $("res").innerHTML = html;
 }
