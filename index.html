@@ -80,13 +80,26 @@ function calLinks(dine, open){
     "SUMMARY:"+esc(title),"DESCRIPTION:"+esc(desc),"URL:"+B+"?language=zh-tw",
     "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+esc(title),"TRIGGER:-PT3H","END:VALARM",
     "END:VEVENT","END:VCALENDAR"].join("\r\n");
-  const url = "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics);
   const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
-  const btn = mobile ? `<a href="${url}" download="zonzen-${day}.ics">加入行事曆</a>`
-                     : `<a href="${g}" target="_blank" rel="noopener">加入行事曆</a>`;
-  return `<div class="cal">${btn}</div>`
+  if(!mobile) return `<div class="cal"><a href="${g}" target="_blank" rel="noopener">加入行事曆</a></div>`
     +`<p style="margin-top:8px">00:00 開放；開放前一晚 21:00 會提醒</p>`;
+  window.__ics = {text:ics, name:`zonzen-${day}.ics`};
+  return `<div class="cal"><a href="#" id="icsbtn">加入行事曆</a></div>`
+    +`<p style="margin-top:8px">00:00 開放；開放前一晚 21:00 會提醒</p>`
+    +`<p style="margin-top:6px"><a href="${g}" target="_blank" rel="noopener" style="color:var(--gold)">按了沒反應？改用 Google 行事曆開啟</a></p>`;
 }
+// 手機：手機瀏覽器不支援 data: 網址下載，改用 Blob 網址（Content-Type 為 text/calendar）
+document.addEventListener("click", e => {
+  const a = e.target.closest("#icsbtn"); if(!a) return;
+  e.preventDefault();
+  const url = URL.createObjectURL(new Blob([window.__ics.text],{type:"text/calendar;charset=utf-8"}));
+  if(!/Android/i.test(navigator.userAgent)){
+    location.href = url;           // iOS：直接開啟 → 跳出「加入行事曆」
+  } else {
+    const l = document.createElement("a"); l.href = url; l.download = window.__ics.name;
+    document.body.appendChild(l); l.click(); l.remove();
+  }
+});
 function render(){
   const t = today();
   $("now").innerHTML = `今天（${fmt(t)}）可預訂至<b>${fmt(addDays(t,DAYS))}</b>`;
